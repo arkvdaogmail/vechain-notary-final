@@ -1,61 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VeChain Document Notarization</title>
+    <title>VeChain Notarization</title>
 </head>
 <body>
     <h1>VeChain Document Notarization</h1>
     <input type="file" id="fileInput">
-    <button id="notarizeBtn">Notarize on VeChain</button>
+    <button id="notarizeBtn">Notarize</button>
     <div id="result"></div>
 
     <script>
-        const fileInput = document.getElementById('fileInput');
-        const notarizeBtn = document.getElementById('notarizeBtn');
-        const resultDiv = document.getElementById('result');
-
-        async function sha256(file) {
-            const buffer = await file.arrayBuffer();
-            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        notarizeBtn.addEventListener('click', async () => {
-            const file = fileInput.files[0];
+        document.getElementById('notarizeBtn').addEventListener('click', async () => {
+            const file = document.getElementById('fileInput').files[0];
+            const resultDiv = document.getElementById('result');
             if (!file) {
-                resultDiv.innerHTML = '<p style="color:red;">Please select a file first.</p>';
+                resultDiv.innerText = 'Select a file.';
                 return;
             }
-
-            resultDiv.innerHTML = '<p>⏳ Generating hash...</p>';
-            const fileHash = await sha256(file);
+            resultDiv.innerText = 'Working...';
+            const fileBuffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
+            const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             
-            resultDiv.innerHTML = `<p>✅ Hash Generated: ${fileHash}</p><p>⏳ Submitting to VeChain...</p>`;
-
             try {
                 const response = await fetch('/api/notarize', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash: fileHash })
+                    body: JSON.stringify({ hash: hash })
                 });
-
                 const data = await response.json();
-
-                if (data.success) {
-                    const explorerUrl = `https://explore-testnet.vechain.org/transactions/${data.txId}`;
-                    resultDiv.innerHTML = `
-                        <p style="color:green;">✅ Success!</p>
-                        <p>Transaction ID: ${data.txId}</p>
-                        <a href="${explorerUrl}" target="_blank">View on VeChain Explorer</a>
-                    `;
-                } else {
-                    throw new Error(data.error || 'Unknown error');
-                }
-
+                if (!response.ok) throw new Error(data.error);
+                resultDiv.innerHTML = `Success! TXID: <a href="https://explore-testnet.vechain.org/transactions/${data.txId}" target="_blank">${data.txId}</a>`;
             } catch (error) {
-                console.error('Fetch Error:', error);
-                resultDiv.innerHTML = `<p style="color:red;">❌ Notarization Failed<br>Error: ${error.message}</p>`;
+                resultDiv.innerText = `Error: ${error.message}`;
             }
         });
     </script>
