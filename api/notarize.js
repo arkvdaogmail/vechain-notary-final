@@ -66,3 +66,4 @@ export default async function handler(req, res) {
         return buildErrorResponse(res, 500, 'API execution failed.', { message: error.message });
     }
 }
+
