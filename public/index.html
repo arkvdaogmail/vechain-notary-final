@@ -1,31 +1,61 @@
 <!DOCTYPE html>
 <html>
-<head><title>VeChain Notarization</title></head>
+<head>
+    <title>VeChain Notarization (Wallet Version)</title>
+    <script src="https://unpkg.com/@vechain/connex@2.1.0/dist/connex.min.js"></script>
+</head>
 <body>
     <h1>VeChain Document Notarization</h1>
+    <p>Please install a VeChain wallet like VeWorld or Sync2 before you begin.</p>
+    <hr>
     <input type="file" id="fileInput">
-    <button id="notarizeBtn">Notarize</button>
+    <button id="notarizeBtn">Notarize with My Wallet</button>
     <div id="result" style="margin-top:20px; font-family:monospace; word-break: break-all;"></div>
+
     <script>
         document.getElementById('notarizeBtn').addEventListener('click', async () => {
-            const file = document.getElementById('fileInput').files[0];
+            const fileInput = document.getElementById('fileInput');
             const resultDiv = document.getElementById('result');
-            if (!file) { resultDiv.innerText = 'Error: Select a file.'; return; }
-            resultDiv.innerText = 'Working...';
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                resultDiv.innerText = 'Error: Please select a file first.';
+                return;
+            }
+
+            // Check if the user has a VeChain wallet installed
+            if (!window.connex) {
+                resultDiv.innerText = 'Error: VeChain wallet not found. Please install VeWorld or Sync2.';
+                return;
+            }
+
+            resultDiv.innerText = 'Working... Please check your wallet to approve the transaction.';
+            
             try {
+                // 1. Create the unique fingerprint (hash) of the document
                 const fileBuffer = await file.arrayBuffer();
                 const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
                 const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-                const response = await fetch('/api/notarize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash })
-                });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Unknown server error');
-                const explorerUrl = `https://explore-testnet.vechain.org/transactions/${data.txId}`;
-                resultDiv.innerHTML = `Success! TXID: <a href="${explorerUrl}" target="_blank">${data.txId}</a>`;
-            } catch (error) { resultDiv.innerText = `Error: ${error.message}`; }
+
+                // 2. Ask the user's wallet to create and sign the transaction
+                const signingService = connex.vendor.sign('tx');
+                signingService.comment('Notarize document hash');
+                
+                const { txid } = await signingService.request([{
+                    to: null, // This sends data to the blockchain, not VET tokens
+                    value: '0x0',
+                    data: hash
+                }]);
+
+                // 3. Success! Show the transaction ID and a link to the explorer
+                const explorerUrl = `https://explore-testnet.vechain.org/transactions/${txid}`;
+                resultDiv.innerHTML = `✅ Success! TXID: <a href="${explorerUrl}" target="_blank">${txid}</a>`;
+
+            } catch (error) {
+                // If the user cancels or any other error occurs
+                console.error(error);
+                resultDiv.innerText = `Error: ${error.message}`;
+            }
         });
     </script>
 </body>
