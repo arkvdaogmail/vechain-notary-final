@@ -23,27 +23,32 @@
                 return;
             }
 
+            // Always clear previous results first
+            resultDiv.innerHTML = '';
+
             try {
                 // 1. Create the unique fingerprint (hash) of the document
                 const fileBuffer = await file.arrayBuffer();
                 const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
                 const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-                // --- NEW CODE FOR TESTING ---
-                // Display the hash on the page so we can copy it for the test.
-                resultDiv.innerHTML = `Document Hash (for testing): ${hash}  
----  
-Now attempting to connect to wallet...`;
+                // --- THIS IS THE TEST ---
+                // Display the hash on the page so we can copy it.
+                resultDiv.innerHTML = `Document Hash (for testing): ${hash}`;
 
-                // 2. Check for wallet AFTER creating the hash
+                // 2. Now, check for the wallet
                 if (!window.connex) {
+                    // If no wallet, add the error message but DO NOT throw an error.
                     resultDiv.innerHTML += '  
-Error: VeChain wallet not found. Please install VeWorld or Sync2.';
-                    return; // Stop here if no wallet
+---  
+Error: VeChain wallet not found. (This is OK for our test)';
+                    return; // Stop the script here.
                 }
 
-                // 3. Ask the user's wallet to create and sign the transaction
-                resultDiv.innerText = 'Working... Please check your wallet to approve the transaction.';
+                // 3. If a wallet IS found, proceed with the transaction
+                resultDiv.innerHTML += '  
+---  
+Wallet found! Please check your wallet to approve.';
                 const signingService = connex.vendor.sign('tx');
                 signingService.comment('Notarize document hash');
                 
@@ -58,8 +63,10 @@ Error: VeChain wallet not found. Please install VeWorld or Sync2.';
                 resultDiv.innerHTML = `✅ Success! TXID: <a href="${explorerUrl}" target="_blank">${txid}</a>`;
 
             } catch (error ) {
+                // This will catch errors from the wallet (e.g., user rejects transaction)
                 console.error(error);
-                resultDiv.innerText = `Error: ${error.message}`;
+                resultDiv.innerHTML += `  
+Error: ${error.message}`;
             }
         });
     </script>
