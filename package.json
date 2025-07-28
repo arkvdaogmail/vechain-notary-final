@@ -1,7 +1,7 @@
 {
-  "name": "vechain-notary-final-correct",
+  "name": "vechain-notary-engine-final",
   "version": "1.0.0",
   "dependencies": {
-    "@vechain/sdk-core": "^2.1.0"
+    "@vechain/sdk-core": "^2.0.0"
   }
 }
