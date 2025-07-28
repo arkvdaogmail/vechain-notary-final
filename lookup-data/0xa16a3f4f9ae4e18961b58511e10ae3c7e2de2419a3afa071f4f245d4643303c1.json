@@ -1,0 +1,23 @@
+{
+  "document_id": "b71be893-c2b5-4d87-8a79-cc2100923037",
+  "file_name": "advanced-test-document.txt",
+  "file_size": 1098,
+  "content_hash": "79c5ff85cc48c6c2549805e85257061d5ebce1c10af582a441d73e494233d8ed",
+  "combined_hash": "0xd5cb8a8fad0e60f7fbb63cf4229dba83e6045ffd943eeeba9dc178820c8310ae",
+  "metadata": {
+    "filename": "advanced-test-document.txt",
+    "size": 1098,
+    "created": "2025-07-26T05:13:23.730Z",
+    "modified": "2025-07-26T05:13:23.730Z",
+    "contentHash": "79c5ff85cc48c6c2549805e85257061d5ebce1c10af582a441d73e494233d8ed"
+  },
+  "vechain_tx_id": "0xa16a3f4f9ae4e18961b58511e10ae3c7e2de2419a3afa071f4f245d4643303c1",
+  "vechain_explorer_url": "https://explore-testnet.vechain.org/transactions/0xa16a3f4f9ae4e18961b58511e10ae3c7e2de2419a3afa071f4f245d4643303c1",
+  "created_at": "2025-07-26T05:13:23.734Z",
+  "status": "simulated",
+  "gas_used": "simulated",
+  "block_number": 1208806,
+  "network": "testnet",
+  "transaction_type": "document_notarization",
+  "verification_status": "pending_confirmation"
+}

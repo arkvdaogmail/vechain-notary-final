@@ -1,0 +1,13 @@
+{
+  "document_id": "4d828937-d205-452c-b6ec-cf8eb67825de",
+  "file_name": "test-document.txt",
+  "file_size": 293,
+  "original_hash": "0x4c541e78f71435ee2d310a5aebdfe748ad041b8f0904207d5c62fa9ea1e4baab",
+  "vechain_tx_id": "0x3f9ddb3a72dafbaf6dec9ec08f5d3bb898b4e359c2144e2b3fe1518214971cf7",
+  "vechain_explorer_url": "https://explore-testnet.vechain.org/transactions/0x3f9ddb3a72dafbaf6dec9ec08f5d3bb898b4e359c2144e2b3fe1518214971cf7",
+  "created_at": "2025-07-26T05:13:20.171Z",
+  "status": "completed",
+  "gas_used": "21000",
+  "block_number": 1263585,
+  "network": "testnet"
+}
