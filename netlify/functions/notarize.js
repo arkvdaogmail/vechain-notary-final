@@ -1,5 +1,4 @@
-import { ThorClient } from '@vechain/sdk-network';
-import { Transaction, secp256k1, cry } from '@vechain/sdk-core';
+import { ThorClient, cry, Transaction, secp256k1 } from '@vechain/sdk-core';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
