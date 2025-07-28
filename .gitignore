@@ -9,8 +9,8 @@ node_modules/
 # Build output
 dist/
 build/
-.vercel/
-vercel.json
+.netify/
+
 
 # Logs
 *.log
