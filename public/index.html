@@ -13,7 +13,7 @@
     <div id="result" style="margin-top:20px; font-family:monospace; word-break: break-all;"></div>
 
     <script>
-        document.getElementById('notarizeBtn').addEventListener('click', async () => {
+        document.getElementById('notarizeBtn' ).addEventListener('click', async () => {
             const fileInput = document.getElementById('fileInput');
             const resultDiv = document.getElementById('result');
             const file = fileInput.files[0];
@@ -23,36 +23,41 @@
                 return;
             }
 
-            // Check if the user has a VeChain wallet installed
-            if (!window.connex) {
-                resultDiv.innerText = 'Error: VeChain wallet not found. Please install VeWorld or Sync2.';
-                return;
-            }
-
-            resultDiv.innerText = 'Working... Please check your wallet to approve the transaction.';
-            
             try {
                 // 1. Create the unique fingerprint (hash) of the document
                 const fileBuffer = await file.arrayBuffer();
                 const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
                 const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-                // 2. Ask the user's wallet to create and sign the transaction
+                // --- NEW CODE FOR TESTING ---
+                // Display the hash on the page so we can copy it for the test.
+                resultDiv.innerHTML = `Document Hash (for testing): ${hash}  
+---  
+Now attempting to connect to wallet...`;
+
+                // 2. Check for wallet AFTER creating the hash
+                if (!window.connex) {
+                    resultDiv.innerHTML += '  
+Error: VeChain wallet not found. Please install VeWorld or Sync2.';
+                    return; // Stop here if no wallet
+                }
+
+                // 3. Ask the user's wallet to create and sign the transaction
+                resultDiv.innerText = 'Working... Please check your wallet to approve the transaction.';
                 const signingService = connex.vendor.sign('tx');
                 signingService.comment('Notarize document hash');
                 
                 const { txid } = await signingService.request([{
-                    to: null, // This sends data to the blockchain, not VET tokens
+                    to: null, 
                     value: '0x0',
                     data: hash
                 }]);
 
-                // 3. Success! Show the transaction ID and a link to the explorer
+                // 4. Success! Show the transaction ID
                 const explorerUrl = `https://explore-testnet.vechain.org/transactions/${txid}`;
                 resultDiv.innerHTML = `✅ Success! TXID: <a href="${explorerUrl}" target="_blank">${txid}</a>`;
 
-            } catch (error) {
-                // If the user cancels or any other error occurs
+            } catch (error ) {
                 console.error(error);
                 resultDiv.innerText = `Error: ${error.message}`;
             }
@@ -60,3 +65,4 @@
     </script>
 </body>
 </html>
+
