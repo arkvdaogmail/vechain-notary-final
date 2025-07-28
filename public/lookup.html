@@ -1,289 +1,69 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>VeChain Transaction Lookup</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 20px; 
-           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            margin: 0;
-            min-height: 100vh;
-        }
-        .container { 
-            max-width: 900px; 
-            margin: 0 auto; 
-            background: rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        h1 { 
-            text-align: center; 
-            color: #ffffff; 
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .search-section { 
-            background: rgba(255,255,255,0.1); 
-            padding: 30px; 
-            border-radius: 10px; 
-            margin: 20px 0; 
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        input[type="text"] { 
-            width: 100%; 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 16px;
-            font-family: 'Courier New', monospace;
-        }
-        input[type="text"]::placeholder {
-            color: rgba(255,255,255,0.7);
-        }
-        button { 
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            color: white; 
-            padding: 15px 30px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold;
-            margin: 15px 5px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-        }
-        button:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
-        }
-        button:disabled { 
-            background: #666; 
-            cursor: not-allowed; 
-            transform: none;
-            box-shadow: none;
-        }
-        .result { 
-            background: rgba(255,255,255,0.1); 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin: 20px 0; 
-            border-left: 4px solid #4CAF50;
-        }
-        .error { 
-            border-left-color: #f44336; 
-            background: rgba(244, 67, 54, 0.1); 
-        }
-        .success { color: #4CAF50; }
-        .warning { color: #FF9800; }
-        .info { color: #2196F3; }
-        code { 
-            background: rgba(0,0,0,0.3); 
-            padding: 2px 6px; 
-            border-radius: 3px; 
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-        }
-        .info-box {
-            background: rgba(33, 150, 243, 0.1);
-            border: 1px solid rgba(33, 150, 243, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .transaction-details {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            margin: 10px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .detail-label {
-            font-weight: bold;
-            min-width: 150px;
-        }
-        .detail-value {
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-        }
-        .navigation {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .nav-link {
-            color: #61dafb;
-            text-decoration: none;
-            margin: 0 15px;
-            font-weight: bold;
-        }
-        .nav-link:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🔍 VeChain Transaction Lookup</h1>
-        
-        <div class="navigation">
-            <a href="index.html" class="nav-link">← Back to Notarization</a>
-        </div>
-        
-        <div class="info-box">
-            <h3>🔎 Verify Your Document on VeChain:</h3>
-            <p>Enter a <strong>Transaction ID</strong> or <strong>Document Hash</strong> to view blockchain details and verify document notarization.</p>
-        </div>
-        
-        <div class="search-section">
-            <h2>Search VeChain Blockchain</h2>
-            
-            <input type="text" id="searchInput" placeholder="Enter Transaction ID (0x...) or Document Hash (0x...)">
-            
-            <button id="lookupBtn" onclick="lookupTransaction()">
-                🔍 Lookup on VeChain
-            </button>
-            
-            <div id="result"></div>
-        </div>
-    </div>
+// api/lookup.js
 
-    <script>
-        const searchInput = document.getElementById('searchInput');
-        const lookupBtn = document.getElementById('lookupBtn');
-        const result = document.getElementById('result');
+import { ThorClient } from "@vechain/sdk-network";
+import { buildErrorResponse, buildSuccessResponse } from "../_utils/response-builder";
 
-        const EXPLORER_URL = 'https://explore-testnet.vechain.org';
+export default async function handler(req, res) {
+    // Check for secrets immediately to fail fast with a clear error
+    if (!process.env.VECHAIN_NODE_URL) {
+        return buildErrorResponse(res, 500, 'Server Configuration Error', 'VECHAIN_NODE_URL is not defined on the server.');
+    }
+    if (!process.env.VECHAIN_FROM_ADDRESS) {
+        return buildErrorResponse(res, 500, 'Server Configuration Error', 'VECHAIN_FROM_ADDRESS is not defined on the server.');
+    }
 
-        async function lookupTransaction( ) {
-            const query = searchInput.value.trim();
-            
-            if (!query) {
-                alert('Please enter a Transaction ID or Document Hash');
-                return;
+    const thorClient = new ThorClient(process.env.VECHAIN_NODE_URL);
+    const fromAddress = process.env.VECHAIN_FROM_ADDRESS;
+
+    if (req.method !== 'GET') {
+        return buildErrorResponse(res, 405, 'Method Not Allowed');
+    }
+
+    const { query } = req.query;
+    if (!query || !query.startsWith('0x')) {
+        return buildErrorResponse(res, 400, 'Invalid query. Must be a hash or TX ID starting with 0x.');
+    }
+
+    try {
+        let transactions = [];
+        // Check if it's a transaction ID
+        if (query.length === 66) {
+            const tx = await thorClient.transactions.getTransaction(query);
+            if (tx) {
+                transactions.push(tx);
             }
-
-            lookupBtn.disabled = true;
-            lookupBtn.textContent = '🔍 Searching...';
-            result.innerHTML = '<div class="result"><div class="info">🔍 Searching VeChain blockchain...</div></div>';
-
-            try {
-                // THIS IS THE NEW, CORRECTED FETCH CALL
-                const response = await fetch('/.netlify/functions/notary', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'lookup',
-                        payload: query
-                    })
-                });
-
-                const apiResult = await response.json();
-
-                if (!response.ok || !apiResult.success) {
-                    throw new Error(apiResult.error?.details || apiResult.error?.message || 'An unknown API error occurred.');
-                }
-
-                const transactions = apiResult.data;
-
-                if (transactions.length === 0) {
-                    result.innerHTML = `
-                        <div class="result warning">
-                            <h3>🤔 No Results Found</h3>
-                            <p>No transactions matching that ID or hash were found on the blockchain.</p>
-                        </div>
-                    `;
-                } else {
-                    let html = '';
-                    transactions.forEach(tx => {
-                        const date = new Date(tx.timestamp * 1000).toLocaleString();
-                        html += `
-                            <div class="transaction-details">
-                                <h4>📋 Transaction Details:</h4>
-                                <div class="detail-row">
-                                    <span class="detail-label">Transaction ID:</span>
-                                    <span class="detail-value"><code>${tx.id}</code></span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Timestamp:</span>
-                                    <span class="detail-value">${date}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Block Number:</span>
-                                    <span class="detail-value">${tx.blockNumber}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">From Address:</span>
-                                    <span class="detail-value"><code>${tx.origin}</code></span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Document Hash:</span>
-                                    <span class="detail-value"><code>${tx.hash}</code></span>
-                                </div>
-                                <div style="text-align: center; margin-top: 20px;">
-                                    <button onclick="openInExplorer('${tx.id}')" style="background: #9C27B0;">
-                                        🌐 View on VeChain Explorer
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    result.innerHTML = `<div class="result success"><h3>✅ Transaction(s) Found</h3>${html}</div>`;
-                }
-
-            } catch (error) {
-                console.error('Lookup error:', error);
-                result.innerHTML = `
-                    <div class="result error">
-                        <h3>❌ Lookup Failed</h3>
-                        <p><strong>Error:</strong> ${error.message}</p>
-                    </div>
-                `;
+        } else { // Assume it's a document hash
+            const response = await thorClient.transactions.getTransactions({
+                range: { unit: 'block', from: 0, to: (await thorClient.blocks.getBestBlock()).number },
+                criteriaSet: [{ sender: fromAddress, data: query }],
+                order: 'desc',
+            });
+            if (response && response.transactions) {
+                transactions = response.transactions;
             }
-
-            lookupBtn.disabled = false;
-            lookupBtn.textContent = '🔍 Lookup on VeChain';
         }
 
-        function openInExplorer(txId) {
-            window.open(`${EXPLORER_URL}/transactions/${txId}`, '_blank');
+        if (transactions.length === 0) {
+            return buildSuccessResponse(res, []);
         }
 
-        // Allow Enter key to search
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                lookupTransaction();
-            }
-        });
+        // Format the results consistently
+        const formattedTxs = transactions.map(tx => ({
+            id: tx.id,
+            hash: tx.clauses[0]?.data || 'N/A',
+            timestamp: tx.blockTimestamp,
+            blockNumber: tx.blockNumber,
+            origin: tx.origin,
+        }));
 
-        // Auto-populate search field from URL parameter
-        window.addEventListener('load', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchParam = urlParams.get('search');
-            if (searchParam) {
-                searchInput.value = searchParam;
-                lookupTransaction();
-            }
-        });
-    </script>
-</body>
-</html>
+        return buildSuccessResponse(res, formattedTxs);
 
+    } catch (error) {
+        // This is the new, improved error handling.
+        // It will send the exact error message to the frontend.
+        console.error("Lookup API Runtime Error:", error);
+        const errorMessage = error.message || 'An unknown error occurred.';
+        const errorStack = error.stack || 'No stack trace available.';
+        return buildErrorResponse(res, 500, 'API execution failed.', { message: errorMessage, stack: errorStack });
+    }
+}
