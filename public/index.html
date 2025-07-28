@@ -7,30 +7,46 @@
     <h1>VeChain Document Notarization</h1>
     <input type="file" id="fileInput">
     <button id="notarizeBtn">Notarize</button>
-    <div id="result"></div>
+    <div id="result" style="margin-top:20px; font-family:monospace;"></div>
 
     <script>
         document.getElementById('notarizeBtn').addEventListener('click', async () => {
             const file = document.getElementById('fileInput').files[0];
             const resultDiv = document.getElementById('result');
+            
             if (!file) {
-                resultDiv.innerText = 'Select a file.';
+                resultDiv.innerText = 'Error: Please select a file first.';
                 return;
             }
+
             resultDiv.innerText = 'Working...';
-            const fileBuffer = await file.arrayBuffer();
-            const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
-            const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             
             try {
+                const fileBuffer = await file.arrayBuffer();
+                const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
+                const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
                 const response = await fetch('/api/notarize', {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ hash: hash })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.statusText}`);
+                }
+
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error);
-                resultDiv.innerHTML = `Success! TXID: <a href="https://explore-testnet.vechain.org/transactions/${data.txId}" target="_blank">${data.txId}</a>`;
+                
+                if (data.error) {
+                   throw new Error(data.error);
+                }
+
+                const explorerUrl = `https://explore-testnet.vechain.org/transactions/${data.txId}`;
+                resultDiv.innerHTML = `Success! TXID: <a href="${explorerUrl}" target="_blank">${data.txId}</a>`;
+
             } catch (error) {
+                console.error(error);
                 resultDiv.innerText = `Error: ${error.message}`;
             }
         });
