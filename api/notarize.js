@@ -3,13 +3,12 @@ import { HDNode, Transaction, secp256k1 } from '@vechain/sdk-core';
 import 'dotenv/config';
 
 export default async function handler(request, response) {
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method Not Allowed' });
-  }
+  // For Netlify, the request body is a string
+  const body = JSON.parse(request.body);
+  const { hash } = body;
 
-  const { hash } = request.body;
-  if (!hash) {
-    return response.status(400).json({ error: 'Hash is required' });
+  if (request.method !== 'POST' || !hash) {
+    return response.status(400).json({ error: 'Invalid request' });
   }
 
   try {
@@ -18,9 +17,7 @@ export default async function handler(request, response) {
       throw new Error('Mnemonic phrase is not set in environment variables.');
     }
 
-    const nodeUrl = 'https://testnet.vechain.org';
-    const client = new ThorClient(nodeUrl);
-
+    const client = new ThorClient('https://testnet.vechain.org');
     const hdNode = HDNode.fromMnemonic(mnemonic.split(' '));
     const privateKey = hdNode.derive(0).privateKey;
     const senderAddress = hdNode.derive(0).address;
@@ -39,18 +36,17 @@ export default async function handler(request, response) {
       nonce: Math.floor(Math.random() * 1000000000),
     };
 
-    const transaction = new Transaction(txBody);
-    const signingHash = transaction.getSigningHash();
+    const tx = new Transaction(txBody);
+    const signingHash = tx.getSigningHash();
     const signature = secp256k1.sign(signingHash, privateKey);
-    transaction.signature = signature;
+    tx.signature = signature;
 
-    const rawTransaction = '0x' + transaction.encode().toString('hex');
-    const txResponse = await client.transactions.sendTransaction(rawTransaction);
+    const rawTx = '0x' + tx.encode().toString('hex');
+    const txResponse = await client.transactions.sendTransaction(rawTx);
 
     return response.status(200).json({ success: true, txId: txResponse.id });
 
   } catch (error) {
-    console.error('Backend Error:', error);
     return response.status(500).json({ success: false, error: error.message });
   }
 }
