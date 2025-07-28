@@ -9,7 +9,7 @@ export async function handler(event) {
     const mnemonic = process.env.MNEMONIC;
 
     if (!mnemonic) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'MNEMONIC key not set in Netlify.' }) };
+      return { statusCode: 500, body: JSON.stringify({ error: 'MNEMONIC secret key not set in Netlify.' }) };
     }
 
     const client = new ThorClient('https://testnet.vechain.org');
@@ -39,4 +39,5 @@ export async function handler(event) {
   } catch (error) {
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
+}
 }
