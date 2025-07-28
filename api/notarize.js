@@ -1,7 +1,15 @@
-export default async function handler(request, response) {
+export async function handler(event) {
   try {
-    // This dummy engine ignores the request and just sends a success message.
-    const txId = "dummy-transaction-id-12345";
-    return response.status(200).json({ success: true, txId: txId });
+    // This is a dummy engine. It always succeeds.
+    const dummyTxId = "success-from-dummy-engine-12345";
+    return { 
+      statusCode: 200, 
+      body: JSON.stringify({ success: true, txId: dummyTxId }) 
+    };
   } catch (error) {
-    return response.status(500).json({ success: false, error:
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ success: false, error: 'The dummy engine itself failed.' }) 
+    };
+  }
+}
