@@ -1,5 +1,5 @@
 import { ThorClient } from '@vechain/sdk-network';
-import { HDNode, Transaction, secp256k1 } from '@vechain/sdk-core';
+import { cry, Transaction, secp256k1 } from '@vechain/sdk-core';
 
 export async function handler(event) {
   // Ensure this is a POST request
@@ -13,19 +13,18 @@ export async function handler(event) {
 
     // Check for missing data
     if (!hash) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing hash in request body.' }) };
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing hash.' }) };
     }
     if (!mnemonic) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'Server configuration error: MNEMONIC not set.' }) };
+      return { statusCode: 500, body: JSON.stringify({ error: 'Server Error: MNEMONIC key not set.' }) };
     }
 
     // Connect to VeChain
     const client = new ThorClient('https://testnet.vechain.org');
     
-    // Create wallet from your secret phrase
-    const hdNode = HDNode.fromMnemonic(mnemonic.split(' '));
-    const privateKey = hdNode.derive(0).privateKey;
-    const address = hdNode.derive(0).address;
+    // **THE FIX IS HERE:** We use 'cry.mnemonic' which is a more robust way to handle the key.
+    const privateKey = cry.mnemonic.toPrivateKey(mnemonic.split(' '));
+    const address = cry.secp256k1.deriveAddress(privateKey);
 
     // Get latest blockchain data to build the transaction
     const bestBlock = await client.blocks.getBestBlock();
@@ -38,7 +37,7 @@ export async function handler(event) {
       expiration: 32,
       clauses: [{ to: address, value: '0x0', data: hash }],
       gasPriceCoef: 0,
-      gas: 21000, // Standard gas limit
+      gas: 21000,
       dependsOn: null,
       nonce: Date.now(),
     };
