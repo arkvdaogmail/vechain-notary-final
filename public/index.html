@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <title>Lookup VeChain Transactions</title>
+    <title>VeChain Document Notarization</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Reusing the same great style from the main page -->
     <style>
         * { box-sizing: border-box; }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             padding: 20px; 
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: white;
             margin: 0;
             min-height: 100vh;
         }
         .container { 
-            max-width: 900px; 
+            max-width: 800px; 
             margin: 0 auto; 
             background: rgba(255,255,255,0.1);
             padding: 40px;
@@ -44,116 +43,234 @@
         .nav-link:hover {
             text-decoration: underline;
         }
-        #loader {
-            text-align: center;
-            font-size: 1.2em;
-            padding: 40px;
+        .upload-section { 
+            background: rgba(255,255,255,0.1); 
+            padding: 30px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        input[type="file"] { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
         }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+        input[type="file"]::-webkit-file-upload-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
         }
-        th {
-            background-color: rgba(255,255,255,0.2);
+        button { 
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            margin: 15px 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
         }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        button:disabled { 
+            background: #666; 
+            cursor: not-allowed; 
+            transform: none;
+            box-shadow: none;
+        }
+        .result { 
+            background: rgba(255,255,255,0.1); 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border-left: 4px solid #4CAF50;
+        }
+        .error { 
+            border-left-color: #f44336; 
+            background: rgba(244, 67, 54, 0.1); 
+        }
+        .file-info { 
+            color: #e0e0e0; 
+            font-size: 14px; 
+            margin: 15px 0; 
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+        .status { color: #4CAF50; font-weight: bold; }
+        .success { color: #4CAF50; }
         code { 
             background: rgba(0,0,0,0.3); 
             padding: 2px 6px; 
             border-radius: 3px; 
             font-family: 'Courier New', monospace;
             word-break: break-all;
-            font-size: 0.9em;
         }
-        a {
-            color: #61dafb;
-            text-decoration: none;
+        .info-box {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
         }
-        a:hover {
-            text-decoration: underline;
+        .blockchain-result {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Transaction Lookup</h1>
-        <div class="navigation">
-            <a href="index.html" class="nav-link">🏠 Home</a>
-        </div>
-
-        <div id="loader">Loading transaction history from the blockchain...</div>
+        <h1>🔗 VeChain Document Notarization</h1>
         
-        <div id="transaction-list" style="display:none;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Document Hash (Data)</th>
-                        <th>Transaction ID</th>
-                    </tr>
-                </thead>
-                <tbody id="transaction-table-body">
-                    <!-- Rows will be inserted here by JavaScript -->
-                </tbody>
-            </table>
+        <div class="navigation">
+            <a href="lookup.html" class="nav-link">🔍 Lookup Transactions</a>
         </div>
-        <div id="error-message" style="color: #f44336;"></div>
+        
+        <div class="info-box">
+            <h3>⛓️ How It Works:</h3>
+            <p>1. <strong>Upload document</strong> → Generate a unique SHA-256 hash.  
+
+            2. <strong>Submit to VeChain</strong> → The hash is stored forever on the blockchain.  
+
+            3. <strong>Get Transaction ID</strong> → Receive proof of your notarization.</p>
+        </div>
+        
+        <div class="upload-section">
+            <h2>Upload Document for Notarization</h2>
+            <p>Select a file to create a permanent, verifiable record on the VeChain blockchain.</p>
+            
+            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+            <div id="fileInfo" class="file-info"></div>
+            
+            <button id="notarizeBtn" onclick="notarizeDocument()" disabled>
+                ⛓️ Notarize on VeChain
+            </button>
+            
+            <div id="result"></div>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const loader = document.getElementById('loader');
-            const transactionListDiv = document.getElementById('transaction-list');
-            const tableBody = document.getElementById('transaction-table-body');
-            const errorMessageDiv = document.getElementById('error-message');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const notarizeBtn = document.getElementById('notarizeBtn');
+        const result = document.getElementById('result');
 
-            try {
-                // Fetch transactions from our new API endpoint
-                const response = await fetch('/api/get-transactions');
-                const result = await response.json();
+        const EXPLORER_URL = 'https://explore-testnet.vechain.org';
 
-                if (!response.ok || !result.success) {
-                    throw new Error(result.error?.message || 'Failed to fetch transactions.');
-                }
+        fileInput.addEventListener('change', function(e ) {
+            const file = e.target.files[0];
+            if (file) {
+                fileInfo.innerHTML = `
+                    <div class="status">✅ Document Ready:</div>
+                    <strong>📄 Name:</strong> ${file.name}  
 
-                const transactions = result.data;
-
-                if (transactions.length === 0) {
-                    loader.textContent = 'No notarization transactions found for this address.';
-                    return;
-                }
-
-                // Populate the table
-                transactions.forEach(tx => {
-                    const row = document.createElement('tr');
-                    const explorerUrl = `https://explore-testnet.vechain.org/transactions/${tx.id}`;
-                    
-                    // Format date for readability
-                    const date = new Date(tx.timestamp * 1000 ).toLocaleString();
-
-                    row.innerHTML = `
-                        <td>${date}</td>
-                        <td><code>${tx.hash}</code></td>
-                        <td><a href="${explorerUrl}" target="_blank" title="View on Explorer">${tx.id.substring(0, 10)}...</a></td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-
-                // Show the table and hide the loader
-                loader.style.display = 'none';
-                transactionListDiv.style.display = 'block';
-
-            } catch (error) {
-                console.error('Error fetching transactions:', error);
-                loader.style.display = 'none';
-                errorMessageDiv.textContent = `Error: ${error.message}`;
+                    <strong>📏 Size:</strong> ${(file.size / 1024).toFixed(2)} KB
+                `;
+                notarizeBtn.disabled = false;
+                result.innerHTML = '';
+            } else {
+                fileInfo.innerHTML = '';
+                notarizeBtn.disabled = true;
             }
         });
+
+        async function sha256(file) {
+            const buffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return '0x' + hashHex;
+        }
+
+        async function notarizeDocument() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            notarizeBtn.disabled = true;
+            notarizeBtn.textContent = '⏳ Processing...';
+            
+            try {
+                // Step 1: Generate hash
+                result.innerHTML = '<div class="result"><div class="status">🔧 Generating document hash...</div></div>';
+                const fileHash = await sha256(file);
+                
+                // Step 2: Submit to our new API
+                result.innerHTML = '<div class="result"><div class="status">🌐 Submitting hash to VeChain via API...</div></div>';
+                
+                // THIS IS THE NEW, CORRECTED FETCH CALL
+                const response = await fetch('/.netlify/functions/notary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'notarize',
+                        payload: fileHash
+                    })
+                });
+
+                const apiResult = await response.json();
+
+                if (!response.ok || !apiResult.success) {
+                    throw new Error(apiResult.error?.details || apiResult.error?.message || 'An unknown API error occurred.');
+                }
+
+                const txId = apiResult.data.transactionId;
+
+                // Step 3: Display success
+                result.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ Notarization Successful!</h3>
+                        <p>Your document has been permanently recorded on the VeChain blockchain.</p>
+                        <div class="blockchain-result">
+                            <p><strong>Document Hash:</strong>  
+<code>${fileHash}</code></p>
+                            <p><strong>Transaction ID:</strong>  
+<code>${txId}</code></p>
+                            <button onclick="openInExplorer('${txId}')" style="background: #9C27B0; margin-top: 10px;">
+                                🌐 View on VeChain Explorer
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Notarization error:', error);
+                result.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Notarization Failed</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+
+            notarizeBtn.disabled = false;
+            notarizeBtn.textContent = '⛓️ Notarize on VeChain';
+        }
+
+        function openInExplorer(txId) {
+            window.open(`${EXPLORER_URL}/transactions/${txId}`, '_blank');
+        }
     </script>
 </body>
 </html>
