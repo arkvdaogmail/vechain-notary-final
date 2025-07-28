@@ -6,10 +6,14 @@ export async function handler(event) {
   }
   try {
     const { hash } = JSON.parse(event.body);
-    const mnemonic = process.env.MNEMONIC.split(' ');
-    
+    const mnemonic = process.env.MNEMONIC;
+
+    if (!mnemonic) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'MNEMONIC key not set in Netlify.' }) };
+    }
+
     const client = new ThorClient('https://testnet.vechain.org');
-    const hdNode = HDNode.fromMnemonic(mnemonic);
+    const hdNode = HDNode.fromMnemonic(mnemonic.split(' '));
     const privateKey = hdNode.derive(0).privateKey;
     const address = hdNode.derive(0).address;
 
