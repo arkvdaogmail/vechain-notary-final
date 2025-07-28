@@ -29,7 +29,7 @@ export async function handler(event, context) {
 
   const fromAddress = process.env.VECHAIN_FROM_ADDRESS;
   const nodeUrl = process.env.VECHAIN_NODE_URL;
-  const mnemonicString = process.env.VECHAIN_PRIVATE_KEY;
+  const mnemonicString = process.env.VECHAIN_PRIVATE_KEY_2;
 
   if (!fromAddress || !nodeUrl || !mnemonicString) {
     return buildErrorResponse(500, 'Server Configuration Error', 'An environment variable is missing.');
