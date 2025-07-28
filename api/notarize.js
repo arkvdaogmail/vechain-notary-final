@@ -1,69 +1,56 @@
-// api/notarize.js - FINAL CORRECTED VERSION
+import { ThorClient } from '@vechain/sdk-network';
+import { HDNode, Transaction, secp256k1 } from '@vechain/sdk-core';
+import 'dotenv/config';
 
-import { ThorClient } from "@vechain/sdk-network";
-import { buildErrorResponse, buildSuccessResponse } from "../_utils/response-builder";
-import { TransactionHandler, secp256k1, cry } from "@vechain/sdk-core";
+export default async function handler(request, response) {
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return buildErrorResponse(res, 405, 'Method Not Allowed');
+  const { hash } = request.body;
+  if (!hash) {
+    return response.status(400).json({ error: 'Hash is required' });
+  }
+
+  try {
+    const mnemonic = process.env.MNEMONIC;
+    if (!mnemonic) {
+      throw new Error('Mnemonic phrase is not set in environment variables.');
     }
 
-    try {
-        // --- THE FIX IS HERE ---
-        // We ensure the private key from environment variables is handled correctly.
-        const privateKeyString = process.env.VECHAIN_PRIVATE_KEY;
-        if (!privateKeyString) {
-            return buildErrorResponse(res, 500, 'Server Config Error', 'VECHAIN_PRIVATE_KEY is not set.');
-        }
-        
-        // The SDK expects a raw hex string for the private key, without the mnemonic phrase.
-        // We will derive the private key from the mnemonic.
-        const privateKeyBytes = cry.mnemonic.toPrivateKey(privateKeyString.split(' '));
-        const account = cry.secp256k1.deriveAddress(privateKeyBytes);
-        
-        const thorClient = new ThorClient(process.env.VECHAIN_NODE_URL || "https://testnet.vechain.org/" );
+    const nodeUrl = 'https://testnet.vechain.org';
+    const client = new ThorClient(nodeUrl);
 
-        const { hash } = req.body;
-        if (!hash || typeof hash !== 'string' || !hash.startsWith('0x')) {
-            return buildErrorResponse(res, 400, 'Invalid or missing hash parameter.');
-        }
+    const hdNode = HDNode.fromMnemonic(mnemonic.split(' '));
+    const privateKey = hdNode.derive(0).privateKey;
+    const senderAddress = hdNode.derive(0).address;
 
-        const clauses = [{ to: account, value: '0x0', data: hash }];
-        const gasResult = await thorClient.gas.estimateGas(clauses, account);
-        const blockRef = await thorClient.blocks.getBestBlockRef();
-        const chainTag = await thorClient.thor.getChainTag();
-        
-        const body = {
-            clauses,
-            gas: gasResult.totalGas,
-            blockRef,
-            chainTag,
-            gasPriceCoef: 128,
-            expiration: 32,
-            dependsOn: null,
-            nonce: Date.now(),
-        };
+    const bestBlock = await client.blocks.getBestBlock();
+    const genesisBlock = await client.blocks.getGenesisBlock();
 
-        const rawTransaction = TransactionHandler.encode(body, false);
-        const signature = cry.secp256k1.sign(TransactionHandler.signingHash(body), privateKeyBytes);
-        
-        const signedTx = {
-            raw: rawTransaction,
-            signature: signature,
-            origin: account
-        };
+    const txBody = {
+      chainTag: parseInt(genesisBlock.id.slice(-2), 16),
+      blockRef: bestBlock.id.slice(0, 18),
+      expiration: 32,
+      clauses: [{ to: senderAddress, value: '0x0', data: hash }],
+      gasPriceCoef: 0,
+      gas: 21000,
+      dependsOn: null,
+      nonce: Math.floor(Math.random() * 1000000000),
+    };
 
-        const { id } = await thorClient.transactions.sendTransaction(signedTx);
+    const transaction = new Transaction(txBody);
+    const signingHash = transaction.getSigningHash();
+    const signature = secp256k1.sign(signingHash, privateKey);
+    transaction.signature = signature;
 
-        return buildSuccessResponse(res, {
-            message: "Transaction sent successfully!",
-            transactionId: id
-        });
+    const rawTransaction = '0x' + transaction.encode().toString('hex');
+    const txResponse = await client.transactions.sendTransaction(rawTransaction);
 
-    } catch (error) {
-        console.error("Notarize API Runtime Error:", error);
-        return buildErrorResponse(res, 500, 'API execution failed.', { message: error.message });
-    }
+    return response.status(200).json({ success: true, txId: txResponse.id });
+
+  } catch (error) {
+    console.error('Backend Error:', error);
+    return response.status(500).json({ success: false, error: error.message });
+  }
 }
-
