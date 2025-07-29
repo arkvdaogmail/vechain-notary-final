@@ -1,48 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hash Test</title>
+    <title>VeChain Notarization (Real Wallet)</title>
+    <script src="https://unpkg.com/@vechain/connex@2.1.0/dist/connex.min.js"></script>
 </head>
 <body>
-    <h1>Core Hash Test</h1>
-    <p>This page only tests the document hashing function.</p>
+    <h1>VeChain Document Notarization</h1>
+    <p><b>Instructions:</b> Make sure your VeWorld wallet is installed, unlocked, and set to the TestNet.</p>
     <hr>
     <input type="file" id="fileInput">
-    <button id="hashBtn">1. Generate Hash</button>
-    <hr>
-    <h2>Result:</h2>
-    <div id="result" style="font-family:monospace; word-break: break-all;"></div>
+    <button id="notarizeBtn">Notarize Document</button>
+    <div id="result" style="margin-top:20px; font-family:monospace; word-break: break-all;"></div>
 
     <script>
-        // This function calculates the hash
-        async function generateHash() {
+        document.getElementById('notarizeBtn' ).addEventListener('click', async () => {
             const fileInput = document.getElementById('fileInput');
             const resultDiv = document.getElementById('result');
             const file = fileInput.files[0];
-
+            
             if (!file) {
                 resultDiv.innerText = 'Error: Please select a file first.';
                 return;
             }
 
+            // Check for the VeWorld/Sync2 wallet
+            if (!window.connex) {
+                resultDiv.innerText = 'Error: VeChain wallet not found. Please install and unlock VeWorld.';
+                return;
+            }
+
+            resultDiv.innerText = 'Processing... Please check your wallet to approve the transaction.';
+            
             try {
-                resultDiv.innerText = 'Calculating hash...';
+                // 1. Create the hash of the document
                 const fileBuffer = await file.arrayBuffer();
                 const hashBuffer = await crypto.subtle.digest('SHA-256', fileBuffer);
                 const hash = '0x' + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+                // 2. Connect to the wallet and request a transaction signature
+                const signingService = connex.vendor.sign('tx');
+                signingService.comment('Notarize document hash on TestNet');
                 
-                // Display the final hash
-                resultDiv.innerText = `Document Hash: ${hash}`;
+                const { txid } = await signingService.request([{
+                    to: null, // This creates a contract clause, not a VET transfer
+                    value: '0x0',
+                    data: hash
+                }]);
 
-            } catch (error) {
-                console.error('Hashing Error:', error);
-                resultDiv.innerText = `A critical error occurred: ${error.message}`;
+                // 3. Success! Show the real Transaction ID (TXID)
+                const explorerUrl = `https://explore-testnet.vechain.org/transactions/${txid}`;
+                resultDiv.innerHTML = `✅ Success! Your document hash is on the TestNet.  
+  
+Transaction ID: <a href="${explorerUrl}" target="_blank">${txid}</a>  
+  
+Document Hash: ${hash}`;
+
+            } catch (error ) {
+                // Handle errors, like the user rejecting the transaction
+                console.error(error);
+                resultDiv.innerText = `Error: The transaction failed. Message: ${error.message}`;
             }
-        }
-
-        // Attach the function to the button's click event
-        document.getElementById('hashBtn').addEventListener('click', generateHash);
+        });
     </script>
 </body>
 </html>
+
 
